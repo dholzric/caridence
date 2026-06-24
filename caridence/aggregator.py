@@ -41,4 +41,15 @@ def aggregate(frame_dets: list[FrameDetections]) -> list[Finding]:
             occurrences=len(occ),
         ))
     findings.sort(key=lambda f: (-_severity_rank(f.severity), -f.confidence))
-    return findings
+    # De-duplicate ids: if two findings slug to the same id, append a counter
+    seen: dict[str, int] = {}
+    deduped: list[Finding] = []
+    for f in findings:
+        base_id = f.id
+        if base_id in seen:
+            seen[base_id] += 1
+            f = f.model_copy(update={"id": f"{base_id}__{seen[base_id]}"})
+        else:
+            seen[base_id] = 0
+        deduped.append(f)
+    return deduped

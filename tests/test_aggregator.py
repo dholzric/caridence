@@ -40,3 +40,15 @@ def test_aggregate_separates_distinct_panels():
 
 def test_aggregate_empty():
     assert aggregate([]) == []
+
+
+def test_aggregate_unique_ids():
+    # "front driver corner" and "front_driver_corner" slug to the same id
+    d1 = Detection(damage_type=DamageType.DENT, panel="front driver corner",
+                   severity=Severity.MINOR, bbox=BBox(x=0.1, y=0.1, w=0.1, h=0.1), confidence=0.8)
+    d2 = Detection(damage_type=DamageType.DENT, panel="front_driver_corner",
+                   severity=Severity.MINOR, bbox=BBox(x=0.2, y=0.2, w=0.1, h=0.1), confidence=0.7)
+    findings = aggregate([_fd(0, [d1]), _fd(1, [d2])])
+    assert len(findings) == 2
+    ids = [f.id for f in findings]
+    assert ids[0] != ids[1], f"Expected distinct ids but got: {ids}"

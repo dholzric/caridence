@@ -35,6 +35,16 @@ def test_run_benchmark_scores_backends():
     assert "latency_ms" in perfect
 
 
+def test_cost_uses_frames_per_inspection():
+    images = [_img(DamageType.DENT, "a.jpg"), _img(DamageType.DENT, "b.jpg")]
+    backends = [
+        ("CostBackend", PerfectBackend(images), lambda n: n * 0.01),
+    ]
+    frames_per_inspection = 10
+    rows = run_benchmark(images, backends, frames_per_inspection=frames_per_inspection)
+    assert rows[0]["cost_per_inspection_usd"] == round(frames_per_inspection * 0.01, 6)
+
+
 def test_write_bench_json(tmp_path):
     rows = [{"model": "m", "f1": 1.0, "precision": 1.0, "recall": 1.0,
              "cost_per_inspection_usd": 0.001, "latency_ms": 5}]

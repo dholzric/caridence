@@ -23,6 +23,15 @@ def test_dashboard_renders(monkeypatch):
     assert "F1" in r.text
 
 
+def test_frame_rejects_outside_temp(monkeypatch):
+    import os
+    c = _client(monkeypatch)
+    # pyproject.toml exists in the project root, which is outside the temp dir
+    project_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "pyproject.toml"))
+    r = c.get(f"/frame?path={project_file}")
+    assert r.status_code == 404
+
+
 def test_inspect_photo_returns_report(monkeypatch, frames_dir):
     c = _client(monkeypatch)
     files = []

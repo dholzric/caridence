@@ -68,8 +68,10 @@ def api_inspect(files: list[UploadFile] = File(...), vehicle_label: str = Form(N
 
 @app.get("/frame")
 def frame(path: str):
-    p = Path(path)
-    if not p.is_file():
+    import tempfile
+    allowed = Path(tempfile.gettempdir()).resolve()
+    p = Path(path).resolve()
+    if allowed not in p.parents or not p.is_file():
         return Response(status_code=404)
     return FileResponse(str(p))
 

@@ -31,7 +31,7 @@ def test_to_target_json_is_parseable_and_compact():
     s = to_target_json(labeled.detections)
     arr = json.loads(s)
     assert isinstance(arr, list) and len(arr) == 2
-    assert set(arr[0].keys()) == {"damage_type", "panel", "severity", "bbox"}
+    assert set(arr[0].keys()) == {"damage_type", "panel", "severity", "bbox", "confidence"}
     assert arr[0]["bbox"] == [0.05, 0.1, 0.3, 0.3]
 
 

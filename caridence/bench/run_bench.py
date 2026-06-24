@@ -10,7 +10,7 @@ from caridence.data.eval_set import load_eval_set
 from caridence.metrics import score_predictions
 
 
-def run_benchmark(eval_images: list[LabeledImage], backends, iou_thr: float = 0.3) -> list[dict]:
+def run_benchmark(eval_images: list[LabeledImage], backends, iou_thr: float = 0.3, frames_per_inspection: int = 10) -> list[dict]:
     """backends: list of (name, backend, cost_fn). cost_fn(n_frames)->usd."""
     rows: list[dict] = []
     for name, backend, cost_fn in backends:
@@ -28,7 +28,7 @@ def run_benchmark(eval_images: list[LabeledImage], backends, iou_thr: float = 0.
             "precision": round(score.precision, 4),
             "recall": round(score.recall, 4),
             "fp_per_image": round(score.fp_per_image, 4),
-            "cost_per_inspection_usd": round(cost_fn(n), 6),
+            "cost_per_inspection_usd": round(cost_fn(frames_per_inspection), 6),
             "latency_ms": int(1000 * elapsed / n),
         })
     return rows
@@ -44,8 +44,6 @@ def main() -> None:  # pragma: no cover - wiring only, exercised manually on MI3
 
     eval_path = Path(os.environ.get("CARIDENCE_EVAL", "data/eval_set.jsonl"))
     images = load_eval_set(eval_path)
-    avg_frames = max(1, len(images))
-
     ft = QwenHTTPBackend(
         api_base=os.environ.get("CARIDENCE_FT_API_BASE", "http://127.0.0.1:8000/v1"),
         model=os.environ.get("CARIDENCE_FT_MODEL", "caridence-7b"),

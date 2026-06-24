@@ -1,6 +1,8 @@
 # caridence/analyzer/qwen_http.py
 from __future__ import annotations
 import base64
+import logging
+import mimetypes
 import os
 from caridence.schema import Frame, Detection, DamageType
 from caridence.analyzer.base import parse_detections
@@ -43,11 +45,12 @@ class QwenHTTPBackend:
 
     def detect(self, frame: Frame) -> list[Detection]:
         b64 = _b64_image(frame.path)
+        mime = mimetypes.guess_type(frame.path)[0] or "image/jpeg"
         messages = [{
             "role": "user",
             "content": [
                 {"type": "text", "text": build_prompt()},
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}},
             ],
         }]
         try:
@@ -56,6 +59,7 @@ class QwenHTTPBackend:
                 max_tokens=self.max_tokens, temperature=0.0,
             )
             content = resp.choices[0].message.content or ""
-        except Exception:
+        except Exception as exc:
+            logging.warning("QwenHTTPBackend.detect failed for %s: %s", frame.path, exc)
             return []
         return parse_detections(content)

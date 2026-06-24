@@ -19,7 +19,7 @@ from PIL import Image
 
 
 class CaridenceDataset(Dataset):
-    def __init__(self, jsonl: Path, processor, max_len: int = 1024):
+    def __init__(self, jsonl: Path, processor, max_len: int = 2048):
         self.rows = [json.loads(l) for l in Path(jsonl).read_text().splitlines() if l.strip()]
         self.processor = processor
         self.max_len = max_len
@@ -41,6 +41,7 @@ class CaridenceDataset(Dataset):
         labels[:n_prompt] = -100  # mask prompt tokens
         item = {k: v[0] for k, v in proc.items()}
         item["input_ids"] = input_ids
+        item["attention_mask"] = proc["attention_mask"][0][: self.max_len]
         item["labels"] = labels
         return item
 

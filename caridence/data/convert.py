@@ -29,6 +29,7 @@ def to_target_json(detections: list[Detection]) -> str:
         "panel": d.panel,
         "severity": d.severity.value,
         "bbox": [round(d.bbox.x, 4), round(d.bbox.y, 4), round(d.bbox.w, 4), round(d.bbox.h, 4)],
+        "confidence": round(d.confidence, 2),
     } for d in detections]
     return json.dumps(arr, separators=(",", ":"))
 

@@ -37,7 +37,7 @@
       <div><span class="pill sev-{{ f.severity }}">{{ f.severity }}</span><span class="pill">{{ f.damage_type }}</span></div>
       <h3>{{ f.panel.replace("_"," ") }}</h3>
       <div class="muted">Cited at {{ "%.1f"|format(f.cited_frame.timestamp) }}s · seen in {{ f.occurrences }} frame(s) · confidence {{ "%.0f"|format(f.confidence*100) }}%</div>
-      <div style="margin-top:.5rem">Est. repair: <strong>${{ "%.0f"|format(f.cost_low) }}–${{ "%.0f"|format(f.cost_high) }}</strong></div>
+      <div style="margin-top:.5rem">Est. repair: <strong>${{ "%.0f"|format(f.cost_low or 0) }}–${{ "%.0f"|format(f.cost_high or 0) }}</strong></div>
     </div>
   </div>
   {% endfor %}

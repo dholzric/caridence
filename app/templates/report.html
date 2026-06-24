@@ -1,0 +1,45 @@
+{# app/templates/report.html #}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caridence Report — {{ report.vehicle_label or "Vehicle" }}</title>
+<style>
+  :root{color-scheme:dark}
+  body{font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif;background:#0a0f1a;color:#e6edf6;margin:0;padding:2rem}
+  h1{letter-spacing:-.02em} .muted{color:#9fb0c6}
+  .summary{display:flex;gap:2rem;flex-wrap:wrap;margin:1rem 0 2rem}
+  .stat{background:#0d1830;border:1px solid #1e3a5f;border-radius:12px;padding:1rem 1.4rem}
+  .stat .v{font-size:1.8rem;font-weight:700}
+  .finding{background:#0d1830;border:1px solid #1e3a5f;border-radius:12px;padding:1rem;margin-bottom:1rem;display:grid;grid-template-columns:240px 1fr;gap:1rem}
+  .frame{position:relative;width:240px;border-radius:8px;overflow:hidden;background:#02060d}
+  .frame img{width:100%;display:block}
+  .box{position:absolute;border:2px solid #f87171;box-shadow:0 0 0 9999px rgba(0,0,0,.12)}
+  .sev-minor{color:#7dd3fc}.sev-moderate{color:#fbbf24}.sev-severe{color:#f87171}
+  .pill{display:inline-block;font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;border:1px solid #1e3a5f;border-radius:999px;padding:.2rem .6rem;margin-right:.4rem}
+</style>
+</head>
+<body>
+  <h1>Caridence — {{ report.vehicle_label or "Vehicle" }} condition report</h1>
+  <div class="summary">
+    <div class="stat"><div class="muted">Condition</div><div class="v">{{ report.condition_score }}/100</div></div>
+    <div class="stat"><div class="muted">Findings</div><div class="v">{{ report.findings|length }}</div></div>
+    <div class="stat"><div class="muted">Est. repair</div><div class="v">${{ "%.0f"|format(report.total_cost_low) }}–${{ "%.0f"|format(report.total_cost_high) }}</div></div>
+    <div class="stat"><div class="muted">Frames analyzed</div><div class="v">{{ report.frame_count }}</div></div>
+  </div>
+  {% for f in report.findings %}
+  <div class="finding">
+    <div class="frame">
+      <img src="/frame?path={{ f.cited_frame.path|urlencode }}" alt="cited frame">
+      <div class="box" style="left:{{ (f.bbox.x*100)|round(1) }}%;top:{{ (f.bbox.y*100)|round(1) }}%;width:{{ (f.bbox.w*100)|round(1) }}%;height:{{ (f.bbox.h*100)|round(1) }}%"></div>
+    </div>
+    <div>
+      <div><span class="pill sev-{{ f.severity }}">{{ f.severity }}</span><span class="pill">{{ f.damage_type }}</span></div>
+      <h3>{{ f.panel.replace("_"," ") }}</h3>
+      <div class="muted">Cited at {{ "%.1f"|format(f.cited_frame.timestamp) }}s · seen in {{ f.occurrences }} frame(s) · confidence {{ "%.0f"|format(f.confidence*100) }}%</div>
+      <div style="margin-top:.5rem">Est. repair: <strong>${{ "%.0f"|format(f.cost_low) }}–${{ "%.0f"|format(f.cost_high) }}</strong></div>
+    </div>
+  </div>
+  {% endfor %}
+</body>
+</html>

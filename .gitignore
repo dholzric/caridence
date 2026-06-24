@@ -1,0 +1,8 @@
+.wrangler/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+.env
+.hf_cache/
+outputs/

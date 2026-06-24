@@ -1,0 +1,9 @@
+{
+  "generated": "placeholder",
+  "rows": [
+    {"model": "Caridence-7B (MI300)", "f1": 0.0, "cost_per_inspection_usd": 0.0, "latency_ms": 0},
+    {"model": "Caridence-3B (MI300)", "f1": 0.0, "cost_per_inspection_usd": 0.0, "latency_ms": 0},
+    {"model": "Qwen2.5-VL-7B base", "f1": 0.0, "cost_per_inspection_usd": 0.0, "latency_ms": 0},
+    {"model": "GPT-4o", "f1": 0.0, "cost_per_inspection_usd": 0.0, "latency_ms": 0}
+  ]
+}

@@ -2,6 +2,10 @@
 node_modules/
 __pycache__/
 *.pyc
+*.egg-info/
+data/*_frames/
+data/prepared/
+data/cardd/
 .venv/
 .env
 .hf_cache/

@@ -38,3 +38,31 @@ def sample_video(tmp_path):
         writer.write(img)
     writer.release()
     return path
+
+
+import json as _json
+
+
+@pytest.fixture
+def cardd_mini(tmp_path):
+    """A 1-image COCO-format CarDD mini set: image 100x80, a dent + a scratch box."""
+    root = tmp_path / "cardd_mini"
+    imgs = root / "images"
+    imgs.mkdir(parents=True)
+    img = np.zeros((80, 100, 3), dtype=np.uint8)
+    cv2.imwrite(str(imgs / "car1.jpg"), img)
+    coco = {
+        "images": [{"id": 1, "file_name": "car1.jpg", "width": 100, "height": 80}],
+        "categories": [
+            {"id": 1, "name": "dent"},
+            {"id": 2, "name": "scratch"},
+            {"id": 3, "name": "glass shatter"},
+        ],
+        "annotations": [
+            {"id": 1, "image_id": 1, "category_id": 1, "bbox": [10, 8, 30, 24]},   # dent, left-upper
+            {"id": 2, "image_id": 1, "category_id": 2, "bbox": [70, 60, 20, 16]},  # scratch, right-lower
+        ],
+    }
+    ann = root / "annotations.json"
+    ann.write_text(_json.dumps(coco))
+    return {"ann": ann, "images": imgs, "root": root}

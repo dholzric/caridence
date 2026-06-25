@@ -1,0 +1,104 @@
+# Caridence
+
+**Phone walkaround → cited vehicle-damage report in 60 seconds.**
+
+Caridence turns a short phone walkaround of any vehicle into an objective,
+structured condition report where **every damage finding cites the exact
+timestamped frame it was seen in** — graded by severity with a repair-cost
+estimate. It produces shareable, defensible proof of condition for rental
+returns, peer-to-peer car sharing, dealer trade-ins, and insurance
+first-notice-of-loss.
+
+Built for the **AMD Developer Hackathon: ACT II** (Track 3 — Unicorn).
+
+## Why it's interesting
+
+The engine is a small open vision-language model (**Qwen2.5-VL**) fine-tuned on
+car-damage data and served on the **AMD MI300** — matching frontier (GPT-4o)
+detection quality at a fraction of the per-inspection cost. A built-in benchmark
+dashboard proves the claim with measured numbers, not marketing.
+
+- **No fragile video model.** Ingestion is `ffmpeg`/OpenCV frame sampling +
+  per-frame analysis, then aggregation. Robust, and every finding maps to a
+  citable frame.
+- **Video is optional.** Accepts a walkaround video *or* a folder of photos.
+- **Swappable backend.** `mock` (no GPU), or `qwen` against any vLLM
+  OpenAI-compatible endpoint (local 3090 or MI300) — selected by one env var.
+
+## Architecture
+
+```
+video/photos
+  → ingest      (timestamped, blur-filtered, deduped frames)
+  → analyzer    (per-frame VLM detections: damage_type, panel, severity, bbox)
+  → aggregator  (unique findings + clearest "cited frame" + panel)
+  → estimator   (severity + repair-cost range + condition score)
+  → report      (JSON + HTML with cited-frame bbox overlay)
+  → web         (FastAPI upload UI + benchmark dashboard)
+```
+
+Training & benchmark (the moat): `CarDD → enrich (panel/severity) → instruction
+JSONL → LoRA fine-tune Qwen2.5-VL → merge → serve on MI300 → benchmark vs
+frontier → data/bench.json` (rendered by the dashboard).
+
+## Quickstart (mock backend, no GPU)
+
+```bash
+python -m venv .venv && .venv/Scripts/pip install -e ".[dev]"
+.venv/Scripts/pytest                                   # 60 tests
+.venv/Scripts/uvicorn app.server:app --port 8000       # open http://127.0.0.1:8000/
+```
+
+Upload a folder of car photos (or a walkaround video) and get a cited damage
+report. `/dashboard` renders the benchmark numbers from `data/bench.json`.
+
+### Docker
+
+```bash
+docker build -t caridence .
+docker run --rm -p 8000:8000 caridence          # mock backend by default
+```
+
+### Real model backend
+
+```bash
+export CARIDENCE_BACKEND=qwen
+export CARIDENCE_API_BASE=http://<vllm-host>:8000/v1
+export CARIDENCE_MODEL=caridence-7b
+```
+
+## Training & benchmark
+
+```bash
+# 1. Prepare data from a CarDD download
+python train/prepare_data.py --ann data/cardd/annotations/train.json \
+    --images data/cardd/images/train --out data/prepared --val-frac 0.1
+
+# 2. LoRA fine-tune (QLoRA on 24GB GPUs; full precision on MI300)
+python train/train_lora.py --train data/prepared/train.jsonl \
+    --output outputs/caridence-7b --steps 600         # add --qlora on 3090s
+python train/merge_adapter.py --adapter outputs/caridence-7b \
+    --out outputs/caridence-7b-merged
+
+# 3. Serve + benchmark → fills data/bench.json
+bash scripts/serve_vllm.sh outputs/caridence-7b-merged 8000
+python -m caridence.bench.run_bench
+```
+
+## Project layout
+
+| Path | Responsibility |
+|---|---|
+| `caridence/ingest.py` | video/photos → frames |
+| `caridence/analyzer/` | VLM backends (`mock`, `qwen_http`) + parser |
+| `caridence/aggregator.py` | detections → unique cited findings |
+| `caridence/estimator.py`, `costs.py` | severity + repair-cost + condition score |
+| `caridence/report.py` | JSON + HTML report |
+| `caridence/pipeline.py` | end-to-end orchestration |
+| `app/server.py` | FastAPI upload UI + dashboard |
+| `caridence/data/`, `caridence/metrics.py`, `caridence/bench/` | training data + eval + benchmark |
+| `train/`, `scripts/` | fine-tune, merge, serve |
+
+## License
+
+MIT.

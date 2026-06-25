@@ -65,6 +65,9 @@ def main() -> None:
     ap.add_argument("--eval-set", dest="eval_set", default="data/prepared_test/eval_set.jsonl")
     ap.add_argument("--out", default="data/bench.json")
     ap.add_argument("--limit", type=int, default=0, help="0 = all eval images")
+    ap.add_argument("--ft-label", default="Caridence-3B (fine-tuned, AMD-ready)")
+    ap.add_argument("--base-label", default="Qwen2.5-VL-3B base (zero-shot)")
+    ap.add_argument("--skip-base", action="store_true", help="benchmark only the fine-tuned model")
     args = ap.parse_args()
 
     eval_images = load_eval_set(args.eval_set)
@@ -73,10 +76,9 @@ def main() -> None:
     n = len(eval_images)
     processor = AutoProcessor.from_pretrained(args.base)
 
-    variants = [
-        ("Caridence-3B (fine-tuned, AMD-ready)", args.adapter),
-        ("Qwen2.5-VL-3B base (zero-shot)", None),
-    ]
+    variants = [(args.ft_label, args.adapter)]
+    if not args.skip_base:
+        variants.append((args.base_label, None))
     rows = []
     for name, adapter in variants:
         print(f"[bench] {name} ...", flush=True)

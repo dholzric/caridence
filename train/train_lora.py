@@ -33,29 +33,40 @@ class CaridenceDataset(Dataset):
             {"type": "image"}, {"type": "text", "text": row["prompt"]}]}]
         prompt_text = self.processor.apply_chat_template(user_msg, add_generation_prompt=True, tokenize=False)
         full_text = prompt_text + row["response"]
-        proc = self.processor(text=[full_text], images=[image], return_tensors="pt", padding=True)
-        prompt_only = self.processor(text=[prompt_text], images=[image], return_tensors="pt", padding=True)
-        input_ids = proc["input_ids"][0][: self.max_len]
+        proc = self.processor(text=[full_text], images=[image], return_tensors="pt")
+        prompt_only = self.processor(text=[prompt_text], images=[image], return_tensors="pt")
+        input_ids = proc["input_ids"][0]
         labels = input_ids.clone()
         n_prompt = prompt_only["input_ids"].shape[1]
-        labels[:n_prompt] = -100  # mask prompt tokens
-        item = {k: v[0] for k, v in proc.items()}
-        item["input_ids"] = input_ids
-        item["attention_mask"] = proc["attention_mask"][0][: self.max_len]
-        item["labels"] = labels
-        return item
+        labels[:n_prompt] = -100  # train only on the response span
+        # NOTE: do not truncate or slice multimodal sequences — the image
+        # placeholder tokens must stay aligned with pixel_values/image_grid_thw.
+        # pixel_values ([num_patches, dim]) and image_grid_thw ([num_imgs, 3])
+        # carry NO batch dim from the processor; keep them as-is for the collator.
+        return {
+            "input_ids": input_ids,
+            "attention_mask": proc["attention_mask"][0],
+            "labels": labels,
+            "pixel_values": proc["pixel_values"],
+            "image_grid_thw": proc["image_grid_thw"],
+        }
 
 
 def collate(batch):
-    keys = batch[0].keys()
-    out = {}
-    for k in keys:
-        if k in ("input_ids", "labels", "attention_mask"):
-            out[k] = torch.nn.utils.rnn.pad_sequence(
-                [b[k] for b in batch], batch_first=True,
-                padding_value=(-100 if k == "labels" else 0))
-        else:
-            out[k] = torch.stack([b[k] for b in batch]) if batch[0][k].dim() > 0 else torch.tensor([b[k] for b in batch])
+    out = {
+        "input_ids": torch.nn.utils.rnn.pad_sequence(
+            [b["input_ids"] for b in batch], batch_first=True, padding_value=0),
+        "attention_mask": torch.nn.utils.rnn.pad_sequence(
+            [b["attention_mask"] for b in batch], batch_first=True, padding_value=0),
+        "labels": torch.nn.utils.rnn.pad_sequence(
+            [b["labels"] for b in batch], batch_first=True, padding_value=-100),
+    }
+    # Qwen2.5-VL expects vision tensors concatenated along dim 0, NOT stacked
+    # (stacking adds a phantom batch dim that zeroes the spatial-merge grid).
+    if "pixel_values" in batch[0]:
+        out["pixel_values"] = torch.cat([b["pixel_values"] for b in batch], dim=0)
+    if "image_grid_thw" in batch[0]:
+        out["image_grid_thw"] = torch.cat([b["image_grid_thw"] for b in batch], dim=0)
     return out
 
 

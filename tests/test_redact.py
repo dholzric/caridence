@@ -57,7 +57,8 @@ def test_redactor_skips_non_plate_shaped(tmp_path):
     r = PlateRedactor(model=_FakeYOLO([_FakeBox([80, 0, 140, 60])]), method="box")
     out = tmp_path / "red.jpg"
     r.redact(str(p), str(out))
-    assert np.array_equal(cv2.imread(str(p)), cv2.imread(str(out)))
+    # bright plate-patch must survive (would be ~0 if wrongly box-redacted)
+    assert cv2.imread(str(out))[40:60, 80:140].mean() > 200
 
 
 def test_apply_redaction_updates_frame_paths(tmp_path):

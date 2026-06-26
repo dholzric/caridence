@@ -57,11 +57,20 @@ def _save_uploads(files: list[UploadFile], dest: Path) -> Path:
     return dest
 
 
+def get_redactor():
+    """Plate redactor when CARIDENCE_REDACT is enabled, else None."""
+    if os.environ.get("CARIDENCE_REDACT", "0").lower() in ("1", "true", "yes"):
+        from caridence.redact import PlateRedactor
+        return PlateRedactor(method=os.environ.get("CARIDENCE_REDACT_METHOD", "blur"))
+    return None
+
+
 @app.post("/inspect", response_class=HTMLResponse)
 def inspect(files: list[UploadFile] = File(...), vehicle_label: str = Form(None)):
     tmp = Path(tempfile.mkdtemp(prefix="caridence_"))
     source = _save_uploads(files, tmp)
-    report = run_inspection(source, backend=get_backend(), vehicle_label=vehicle_label)
+    report = run_inspection(source, backend=get_backend(),
+                            vehicle_label=vehicle_label, redactor=get_redactor())
     return render_report_html(report)
 
 
@@ -69,7 +78,8 @@ def inspect(files: list[UploadFile] = File(...), vehicle_label: str = Form(None)
 def api_inspect(files: list[UploadFile] = File(...), vehicle_label: str = Form(None)):
     tmp = Path(tempfile.mkdtemp(prefix="caridence_"))
     source = _save_uploads(files, tmp)
-    report = run_inspection(source, backend=get_backend(), vehicle_label=vehicle_label)
+    report = run_inspection(source, backend=get_backend(),
+                            vehicle_label=vehicle_label, redactor=get_redactor())
     return JSONResponse(report_to_dict(report))
 
 

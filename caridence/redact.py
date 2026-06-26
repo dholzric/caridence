@@ -23,10 +23,15 @@ class PlateRedactor:
     """
 
     def __init__(self, weights: str | None = None, model=None,
-                 conf: float = 0.25, method: str = "blur", pad: int = 4):
+                 conf: float = 0.35, method: str = "blur", pad: int = 4,
+                 min_aspect: float = 1.6, max_aspect: float = 8.0):
         self.conf = conf
         self.method = method
         self.pad = pad
+        # License plates are wide rectangles; this rejects square false
+        # positives (wheels/badges) that a plate detector can fire on.
+        self.min_aspect = min_aspect
+        self.max_aspect = max_aspect
         if model is not None:
             self.model = model
         else:
@@ -38,9 +43,15 @@ class PlateRedactor:
         res = self.model.predict(image_path, conf=self.conf, verbose=False)[0]
         out = []
         for b in res.boxes:
-            x1, y1, x2, y2 = _xyxy(b)
-            x1 = max(0, int(x1) - self.pad); y1 = max(0, int(y1) - self.pad)
-            x2 = min(w, int(x2) + self.pad); y2 = min(h, int(y2) + self.pad)
+            rx1, ry1, rx2, ry2 = _xyxy(b)
+            bw, bh = rx2 - rx1, ry2 - ry1
+            if bw <= 0 or bh <= 0:
+                continue
+            aspect = bw / bh
+            if aspect < self.min_aspect or aspect > self.max_aspect:
+                continue  # not plate-shaped -> skip (avoid blurring wheels/damage)
+            x1 = max(0, int(rx1) - self.pad); y1 = max(0, int(ry1) - self.pad)
+            x2 = min(w, int(rx2) + self.pad); y2 = min(h, int(ry2) + self.pad)
             if x2 > x1 and y2 > y1:
                 out.append((x1, y1, x2, y2))
         return out

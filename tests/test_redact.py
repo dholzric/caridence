@@ -51,6 +51,15 @@ def test_redactor_no_detection_still_writes(tmp_path):
     assert os.path.exists(str(out))
 
 
+def test_redactor_skips_non_plate_shaped(tmp_path):
+    p = _img(tmp_path)
+    # a square box (aspect ~1.0, e.g. a wheel/badge) must NOT be redacted
+    r = PlateRedactor(model=_FakeYOLO([_FakeBox([80, 0, 140, 60])]), method="box")
+    out = tmp_path / "red.jpg"
+    r.redact(str(p), str(out))
+    assert np.array_equal(cv2.imread(str(p)), cv2.imread(str(out)))
+
+
 def test_apply_redaction_updates_frame_paths(tmp_path):
     p = _img(tmp_path)
     frames = [Frame(index=0, timestamp=0.0, path=str(p))]

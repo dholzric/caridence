@@ -20,7 +20,7 @@ def test_dashboard_renders(monkeypatch):
     c = _client(monkeypatch)
     r = c.get("/dashboard")
     assert r.status_code == 200
-    assert "F1" in r.text
+    assert "Recall" in r.text
 
 
 def test_frame_rejects_outside_temp(monkeypatch):

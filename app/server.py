@@ -82,4 +82,8 @@ def dashboard():
     env = Environment(loader=FileSystemLoader(str(_TEMPLATES)),
                       autoescape=select_autoescape(["html"]))
     data = json.loads((_DATA / "bench.json").read_text())
-    return env.get_template("dashboard.html").render(rows=data["rows"])
+    return env.get_template("dashboard.html").render(
+        rows=data["rows"],
+        eval_set=data.get("eval_set", ""),
+        metric_note=data.get("metric_note", ""),
+    )

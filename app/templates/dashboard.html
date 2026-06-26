@@ -3,16 +3,23 @@
 <title>Caridence — Benchmark</title>
 <style>
  :root{color-scheme:dark}body{font-family:ui-sans-serif,system-ui,sans-serif;background:#0a0f1a;color:#e6edf6;padding:2rem}
- table{border-collapse:collapse;width:100%;max-width:780px}th,td{padding:.7rem 1rem;border-bottom:1px solid #1e3a5f;text-align:left}
+ table{border-collapse:collapse;width:100%;max-width:900px}th,td{padding:.7rem 1rem;border-bottom:1px solid #1e3a5f;text-align:left}
  th{color:#9fb0c6;font-weight:600}.hero td{color:#7dd3fc;font-weight:700}
+ .muted{color:#9fb0c6;font-size:.85rem}.note{color:#56657c;font-size:.8rem}
+ h1{letter-spacing:-.02em}
 </style></head><body>
- <h1>Caridence engine vs frontier</h1>
- <table><thead><tr><th>Model</th><th>Damage F1</th><th>$ / inspection</th><th>Latency</th></tr></thead>
+ <h1>Caridence — damage detection benchmark</h1>
+ <p class="muted">{{ eval_set }}<br>{{ metric_note }}</p>
+ <table><thead><tr><th>Model</th><th>Recall</th><th>Presence recall</th><th>Precision</th><th>Latency</th><th>Note</th></tr></thead>
  <tbody>
  {% for r in rows %}
- <tr class="{{ 'hero' if 'MI300' in r.model else '' }}">
-   <td>{{ r.model }}</td><td>{{ "%.2f"|format(r.f1) }}</td>
-   <td>${{ "%.4f"|format(r.cost_per_inspection_usd) }}</td><td>{{ r.latency_ms }} ms</td>
+ <tr class="{{ 'hero' if 'Detector' in r.model and 'balanced' in r.model else '' }}">
+   <td>{{ r.model }}</td>
+   <td>{{ "%.1f"|format(r.recall*100) }}%</td>
+   <td>{{ "%.1f"|format(r.presence_recall*100) }}%</td>
+   <td>{{ "%.0f"|format(r.precision*100) }}%</td>
+   <td>{{ r.latency_ms }} ms</td>
+   <td class="note">{{ r.note }}</td>
  </tr>
  {% endfor %}
  </tbody></table>

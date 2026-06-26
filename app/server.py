@@ -20,6 +20,13 @@ def get_backend():
     if kind == "qwen":
         from caridence.analyzer.qwen_http import QwenHTTPBackend
         return QwenHTTPBackend()
+    if kind == "detector":
+        from caridence.analyzer.detector import DetectorBackend
+        return DetectorBackend()
+    if kind == "hybrid":
+        from caridence.analyzer.detector import DetectorBackend
+        from caridence.analyzer.hybrid import HybridBackend, VLMVerifier
+        return HybridBackend(detector=DetectorBackend(), verifier=VLMVerifier())
     return MockBackend()
 
 

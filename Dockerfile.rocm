@@ -1,0 +1,30 @@
+# Train / fine-tune Caridence on AMD GPUs (MI300X, Radeon) via ROCm.
+#
+# The base image ships ROCm + a ROCm build of PyTorch, so the same training
+# scripts run on AMD hardware unchanged (PyTorch exposes the HIP backend through
+# the torch.cuda API). See docs/training-on-amd-rocm.md for full instructions.
+FROM rocm/pytorch:latest
+
+WORKDIR /app
+COPY pyproject.toml ./
+
+# Project + training deps. torch/torchvision are already provided (ROCm build)
+# by the base image, so we do NOT reinstall them here.
+RUN pip install --no-cache-dir -e . \
+ && pip install --no-cache-dir "transformers>=4.49" peft accelerate qwen-vl-utils pillow ultralytics
+
+# QLoRA 4-bit on ROCm uses the multi-backend bitsandbytes build (gfx942 / MI300X).
+# Install per AMD's current guidance — see docs/training-on-amd-rocm.md.
+# RUN pip install --no-cache-dir "bitsandbytes>=0.44"
+
+COPY caridence ./caridence
+COPY train ./train
+COPY scripts ./scripts
+
+# Run with GPU access, e.g.:
+#   docker run --rm -it --device=/dev/kfd --device=/dev/dri --group-add video \
+#     --security-opt seccomp=unconfined -v "$PWD/data:/app/data" -v "$PWD/outputs:/app/outputs" \
+#     caridence-rocm python train/train_lora.py \
+#       --model Qwen/Qwen2.5-VL-7B-Instruct --train data/prepared/train.jsonl \
+#       --output outputs/caridence-7b --steps 600
+CMD ["python", "-c", "import torch; print('ROCm/HIP available:', torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no AMD GPU visible')"]

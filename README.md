@@ -13,17 +13,26 @@ Built for the **AMD Developer Hackathon: ACT II** (Track 3 — Unicorn).
 
 ## Why it's interesting
 
-The engine is a small open vision-language model (**Qwen2.5-VL**) fine-tuned on
-car-damage data and served on the **AMD MI300** — matching frontier (GPT-4o)
-detection quality at a fraction of the per-inspection cost. A built-in benchmark
-dashboard proves the claim with measured numbers, not marketing.
+The engine is a **fine-tuned YOLOv11 damage detector** (high recall) paired with
+a **fine-tuned Qwen2.5-VL** verifier (precision) — a hybrid that finds damage and
+confirms each finding, then auto-redacts license plates. A built-in benchmark
+dashboard reports measured numbers (97.8% presence recall on the CarDD test set),
+not marketing.
+
+**AMD:** all models are open and run on **ROCm** — the training and serving code
+is AMD-native (MI300X / Radeon); see [`docs/training-on-amd-rocm.md`](docs/training-on-amd-rocm.md)
+and [`Dockerfile.rocm`](Dockerfile.rocm). Natural-language inspection reports run
+on AMD-hardware models via the **Fireworks AI** API. (This build was trained on
+local GPUs; the code is portable to AMD unchanged.)
 
 - **No fragile video model.** Ingestion is `ffmpeg`/OpenCV frame sampling +
   per-frame analysis, then aggregation. Robust, and every finding maps to a
   citable frame.
 - **Video is optional.** Accepts a walkaround video *or* a folder of photos.
-- **Swappable backend.** `mock` (no GPU), or `qwen` against any vLLM
-  OpenAI-compatible endpoint (local 3090 or MI300) — selected by one env var.
+- **Privacy by default.** License plates (and faces) are detected and redacted
+  before anything reaches the report.
+- **Swappable backend.** `mock` (no GPU), `detector`/`hybrid`, or `qwen` against
+  any vLLM OpenAI-compatible endpoint (NVIDIA or AMD MI300) — one env var.
 
 ## Architecture
 

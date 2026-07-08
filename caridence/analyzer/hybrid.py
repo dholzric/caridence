@@ -9,6 +9,7 @@ detector's false positives while keeping its recall.
 from __future__ import annotations
 import base64
 import os
+import re
 from typing import Protocol
 from caridence.schema import Frame, Detection
 
@@ -56,10 +57,16 @@ class VLMVerifier:
 
     def __init__(self, client=None, model: str | None = None,
                  api_base: str | None = None, api_key: str | None = None,
-                 pad: float = 0.08):
+                 pad: float = 0.08, max_tokens: int | None = None):
         self.model = model or os.environ.get("CARIDENCE_VERIFY_MODEL",
                                              "Qwen/Qwen2.5-VL-7B-Instruct")
         self.pad = pad
+        # Reasoning models think out loud before answering, so leave room for
+        # the answer to arrive; plain VLMs stop after one token anyway.
+        self.max_tokens = max_tokens if max_tokens is not None else int(
+            os.environ.get("CARIDENCE_VERIFY_MAX_TOKENS", "512"))
+        # e.g. "none" to disable thinking on Fireworks reasoning models.
+        self.reasoning_effort = os.environ.get("CARIDENCE_VERIFY_REASONING_EFFORT")
         if client is not None:
             self.client = client
         else:
@@ -81,11 +88,20 @@ class VLMVerifier:
                 {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
             ],
         }]
+        kwargs = {}
+        if self.reasoning_effort:
+            kwargs["extra_body"] = {"reasoning_effort": self.reasoning_effort}
         try:
             resp = self.client.chat.completions.create(
-                model=self.model, messages=messages, max_tokens=5, temperature=0.0)
+                model=self.model, messages=messages,
+                max_tokens=self.max_tokens, temperature=0.0, **kwargs)
             answer = (resp.choices[0].message.content or "").strip().lower()
         except Exception:
             # On verifier failure, keep the candidate (favor recall).
             return True
-        return answer.startswith("y")
+        # The verdict is the LAST yes/no: reasoning models emit thinking text
+        # ("could this be a scratch? Yes, but...") before the final answer.
+        verdicts = re.findall(r"\b(yes|no)\b", answer)
+        if not verdicts:
+            return True  # unparseable -> keep the candidate (favor recall)
+        return verdicts[-1] == "yes"

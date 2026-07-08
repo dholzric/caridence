@@ -68,3 +68,48 @@ def test_vlm_verifier_sends_image(tmp_path):
     sent = v.client.chat.completions.last
     assert sent["model"] == "m"
     assert any("image_url" in str(part) for part in sent["messages"][0]["content"])
+
+
+def test_vlm_verifier_reasoning_model_answer_at_end(tmp_path):
+    # Reasoning models (e.g. Kimi K2.6 on Fireworks) emit thinking text before
+    # the answer; the verdict is the LAST yes/no in the reply.
+    content = ("The user wants me to check this crop for a dent. There is no "
+               "obvious deformation at first, but looking closely at the "
+               "shading there is a depression. Final answer: yes.")
+    v = VLMVerifier(client=_FakeClient(content), model="m")
+    assert v.verify(_frame_with_image(tmp_path), _det(DamageType.DENT)) is True
+
+
+def test_vlm_verifier_reasoning_model_no_at_end(tmp_path):
+    content = ("Hmm, could this be a scratch? Yes, there is a line — but it "
+               "is a reflection of the roofline. Answer: no.")
+    v = VLMVerifier(client=_FakeClient(content), model="m")
+    assert v.verify(_frame_with_image(tmp_path), _det(DamageType.DENT)) is False
+
+
+def test_vlm_verifier_unparseable_reply_fails_open(tmp_path):
+    # No yes/no anywhere -> keep the candidate (favor recall).
+    v = VLMVerifier(client=_FakeClient("I cannot determine that."), model="m")
+    assert v.verify(_frame_with_image(tmp_path), _det(DamageType.DENT)) is True
+
+
+def test_vlm_verifier_max_tokens_env(tmp_path, monkeypatch):
+    monkeypatch.setenv("CARIDENCE_VERIFY_MAX_TOKENS", "777")
+    v = VLMVerifier(client=_FakeClient("yes"), model="m")
+    v.verify(_frame_with_image(tmp_path), _det(DamageType.DENT))
+    assert v.client.chat.completions.last["max_tokens"] == 777
+
+
+def test_vlm_verifier_reasoning_effort_env(tmp_path, monkeypatch):
+    # Reasoning models on Fireworks accept reasoning_effort (e.g. "none") to
+    # skip thinking; pass it through when configured.
+    monkeypatch.setenv("CARIDENCE_VERIFY_REASONING_EFFORT", "none")
+    v = VLMVerifier(client=_FakeClient("yes"), model="m")
+    v.verify(_frame_with_image(tmp_path), _det(DamageType.DENT))
+    assert v.client.chat.completions.last["extra_body"] == {"reasoning_effort": "none"}
+
+
+def test_vlm_verifier_no_reasoning_effort_by_default(tmp_path):
+    v = VLMVerifier(client=_FakeClient("yes"), model="m")
+    v.verify(_frame_with_image(tmp_path), _det(DamageType.DENT))
+    assert "extra_body" not in v.client.chat.completions.last

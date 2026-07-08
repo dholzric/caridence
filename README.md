@@ -61,14 +61,37 @@ python -m venv .venv && .venv/Scripts/pip install -e ".[dev]"
 Upload a folder of car photos (or a walkaround video) and get a cited damage
 report. `/dashboard` renders the benchmark numbers from `data/bench.json`.
 
-### Docker
+### Docker (recommended — real models, no GPU required)
 
 ```bash
 docker build -t caridence .
-docker run --rm -p 8000:8000 caridence          # mock backend by default
+docker run --rm -p 8000:8000 caridence
 ```
 
-### Real model backend
+The image ships the fine-tuned CarDD damage detector and the license-plate
+redactor (`weights/`) and serves the `detector` backend on CPU — upload a
+walkaround video at http://localhost:8000 and get a cited damage report.
+
+To enable hybrid mode (detector recall + VLM verification of every candidate),
+point the verifier at any OpenAI-compatible vision endpoint — vLLM on
+ROCm/MI300X, or Fireworks AI:
+
+```bash
+docker run --rm -p 8000:8000 \
+  -e CARIDENCE_BACKEND=hybrid \
+  -e CARIDENCE_API_BASE=https://api.fireworks.ai/inference/v1 \
+  -e CARIDENCE_API_KEY=$FIREWORKS_API_KEY \
+  -e CARIDENCE_VERIFY_MODEL=accounts/fireworks/models/kimi-k2p6 \
+  -e CARIDENCE_VERIFY_REASONING_EFFORT=low \
+  -e CARIDENCE_VERIFY_MAX_TOKENS=2048 \
+  caridence
+```
+
+`CARIDENCE_VERIFY_REASONING_EFFORT=low` keeps reasoning models decisive;
+the verifier reads the final yes/no of the reply, so plain VLMs
+(e.g. our fine-tuned Qwen served by vLLM) work with the same flags.
+
+### Real model backend (bare metal)
 
 ```bash
 export CARIDENCE_BACKEND=qwen

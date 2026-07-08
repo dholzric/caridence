@@ -7,6 +7,15 @@ data/*_frames/
 data/prepared/
 data/cardd/
 .venv/
+.venv-tts/
 .env
+# personal footage / working demo assets (never publish: unredacted plates)
+demo_videos/
+demo_review/
+redact_demo/
+.playwright-mcp/
+NUL
+# superseded checkpoint (Dockerfile uses cardd_best.pt)
+weights/cardd_v2.pt
 .hf_cache/
 outputs/

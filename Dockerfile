@@ -27,7 +27,7 @@ COPY app ./app
 COPY data ./data
 COPY weights ./weights
 ENV CARIDENCE_BACKEND=detector \
-    CARIDENCE_DETECTOR_WEIGHTS=/app/weights/cardd_best.pt \
+    CARIDENCE_DETECTOR_WEIGHTS=/app/weights/cardd_v3.pt \
     CARIDENCE_PLATE_WEIGHTS=/app/weights/plates_best.pt \
     CARIDENCE_REDACT=1
 EXPOSE 8000

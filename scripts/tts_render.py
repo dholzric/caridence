@@ -52,10 +52,12 @@ SCENES = {
     ],
     "scene_04_amd": [
         "The whole stack is open source and built for AMD. Training and serving "
-        "run on ROCm, and the models are sized to fit a single Instinct M I "
-        "three hundred X with room to spare. The verifier also runs as Gemma "
-        "through Fireworks AI, hosted on AMD hardware. Swap it in with one "
-        "environment variable.",
+        "run on ROCm. We benchmarked the detector live on an AMD Radeon GPU: "
+        "sixty-six frames per second single pass, twenty-six with full "
+        "test-time augmentation. A sixty-second walkaround is analyzed faster "
+        "than it was filmed, and the same ROCm code path scales straight up to "
+        "an Instinct M I three hundred X. The verifier can run as Gemma through "
+        "Fireworks AI on AMD hardware, with one environment variable.",
     ],
     "scene_05_close": [
         "Rental fleets inspect millions of returns a year. Dealers and "

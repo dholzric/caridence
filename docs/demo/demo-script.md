@@ -72,12 +72,14 @@ Legend: **[VISUAL]** = what's on screen while the line is spoken.
 
 ## Scene 4 — AMD platform (2:10–2:40)
 
-**[VISUAL: repo — ROCm training docs / commit, config showing backend flags]**
+**[VISUAL: terminal on the AMD ROCm box running scripts/bench_amd.py → the 66 FPS result; then docs/amd-benchmark.md]**
 
 > The whole stack is open source and built for AMD. Training and serving run on
-> ROCm, and the models are sized to fit a single Instinct MI300X with room to
-> spare. The verifier also runs as Gemma through Fireworks AI, hosted on AMD
-> hardware — swap it in with one environment variable.
+> ROCm. We benchmarked the detector live on an AMD Radeon GPU: sixty-six frames
+> per second single pass, twenty-six with full test-time augmentation. A
+> sixty-second walkaround is analyzed faster than it was filmed, and the same
+> ROCm code path scales straight up to an Instinct MI300X. The verifier can run
+> as Gemma through Fireworks AI on AMD hardware — one environment variable.
 
 ## Scene 5 — Market + close (2:40–3:15)
 

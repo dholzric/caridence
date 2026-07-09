@@ -17,7 +17,27 @@ import time
 
 import numpy as np
 import torch
-from ultralytics import YOLO
+
+# Some ROCm torchvision builds ship without a HIP-compiled `nms` kernel, so
+# torchvision::nms raises NotImplementedError on GPU tensors. The conv backbone
+# still runs on the GPU; only the tiny final NMS needs CPU. Route just that op
+# to CPU so the GPU inference path works. Negligible latency (hundreds of boxes).
+import torchvision  # noqa: E402
+
+_orig_nms = torchvision.ops.nms
+
+
+def _nms_cpu_fallback(boxes, scores, iou_threshold):
+    try:
+        return _orig_nms(boxes, scores, iou_threshold)
+    except NotImplementedError:
+        keep = _orig_nms(boxes.cpu(), scores.cpu(), iou_threshold)
+        return keep.to(boxes.device)
+
+
+torchvision.ops.nms = _nms_cpu_fallback
+
+from ultralytics import YOLO  # noqa: E402
 
 WEIGHTS = sys.argv[1] if len(sys.argv) > 1 else "weights/cardd_v3.pt"
 IMGSZ = 1024
@@ -53,7 +73,11 @@ def summarize(label, times):
 
 
 def main():
-    dev = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
+    if torch.cuda.is_available():
+        props = torch.cuda.get_device_properties(0)
+        dev = props.name or getattr(props, "gcnArchName", "") or "AMD ROCm GPU"
+    else:
+        dev = "CPU"
     print("=" * 64)
     print("Caridence detector benchmark — AMD ROCm")
     print(f"  device : {dev}")

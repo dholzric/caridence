@@ -31,18 +31,19 @@ Legend: **[VISUAL]** = what's on screen while the line is spoken.
 
 **[VISUAL: report renders — findings list appears]**
 
-> A few seconds later, the report. Caridence found the dent on the sliding door
-> of this minivan, graded its severity, and estimated the repair cost.
+> A few seconds later, the report. Caridence found a severe dent along the
+> sliding door, a crack at the rear quarter panel, and scuffing down near the
+> wheel. Each one graded for severity, with an estimated repair cost.
 
-**[VISUAL: click a finding → cited frame opens with bounding box]**
+**[VISUAL: click a finding → cited frame opens with bounding box (van_1711 dent, van_1534 crack)]**
 
 > Every finding links back to the exact frame and the exact box in the video.
 > No hand-waving. You can audit every claim the system makes.
 
-**[VISUAL: the Chevy report — multiple scratch findings across corners]**
+**[VISUAL: Tesla + Ford walkaround frames — no findings overlay ("Clean — 0 findings")]**
 
-> On this Chevy, it caught parking-lot scratches on multiple corners.
-> And on the clean cars we tested, it stayed quiet. No damage means no findings.
+> And on the clean cars we tested, a Tesla and a pickup with no real damage, it
+> stayed quiet. No damage means no findings.
 
 **[VISUAL: plate redaction before/after (redact_demo/plate_before.jpg → plate_after.jpg)]**
 

@@ -24,16 +24,16 @@ SCENES = {
         "video frame, with severity and an estimated repair cost.",
     ],
     "scene_02_demo": [
-        "Here's a real walkaround, shot on a phone in one take. We upload it "
-        "and Caridence goes to work.",
-        "A few seconds later, the report. Caridence found the dent on the "
-        "sliding door of this minivan, graded its severity, and estimated the "
+        "Here's a real walkaround of a minivan, shot on a phone in one take. "
+        "We upload it and Caridence goes to work.",
+        "A few seconds later, the report. Caridence found a severe dent along "
+        "the sliding door, a crack at the rear quarter panel, and scuffing "
+        "down near the wheel. Each one graded for severity, with an estimated "
         "repair cost.",
         "Every finding links back to the exact frame and the exact box in the "
         "video. No hand-waving. You can audit every claim the system makes.",
-        "On this Chevy, it caught parking-lot scratches on multiple corners. "
-        "And on the clean cars we tested, it stayed quiet. No damage means no "
-        "findings.",
+        "And on the clean cars we tested, a Tesla and a pickup with no real "
+        "damage, it stayed quiet. No damage means no findings.",
         "Privacy is built in. License plates are detected and blurred "
         "automatically before anything is stored or shared.",
     ],
